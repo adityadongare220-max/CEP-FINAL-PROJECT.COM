@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="KumbhSetu Nashik - Smart Maha Kumbh Services Portal. Instant QR-code directory for essential services near Ramkund, Panchavati, and Tapovan.">
+    <meta name="theme-color" content="#881337">
+    <title>KumbhSetu Nashik | Smart Maha Kumbh Services Portal</title>
+    
+    <!-- Google Fonts: Poppins & Noto Sans Devanagari for authentic Marathi/Hindi typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 1. HIGH-PRIORITY EMERGENCY TOP BANNER -->
+    <aside class="emergency-banner" role="complementary" aria-label="Emergency Hotlines">
+        <div class="container flex-between">
+            <div class="emergency-info">
+                <span class="pulse" aria-hidden="true"></span>
+                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                <strong data-i18n="emergencyLabel">EMERGENCY 24/7:</strong>
+                <span class="emergency-links">
+                    <a href="tel:108" class="em-link" title="Call Ambulance 108"><i class="fa-solid fa-truck-medical"></i> 108 (Ambulance)</a>
+                    <span class="em-sep">|</span>
+                    <a href="tel:112" class="em-link" title="Call Police 112"><i class="fa-solid fa-shield-halved"></i> 112 (Police)</a>
+                    <span class="em-sep hide-mobile">|</span>
+                    <a href="tel:18002330011" class="em-link hide-mobile" title="Kumbh Helpline 1800-233-0011"><i class="fa-solid fa-headset"></i> 1800-233-0011 (Kumbh Helpline)</a>
+                </span>
+            </div>
+            
+            <!-- Language Selector with Native Scripts -->
+            <div class="lang-controls">
+                <i class="fa-solid fa-globe lang-icon" aria-hidden="true"></i>
+                <label for="langSelect" class="sr-only">Select Language</label>
+                <select id="langSelect" class="lang-select" onchange="changeLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="mr">मराठी (Marathi)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                </select>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 2. PRIMARY HEADER -->
+    <header class="site-header">
+        <div class="container flex-between header-wrapper">
+            <div class="brand">
+                <div class="brand-emblem" aria-hidden="true">
+                    <i class="fa-solid fa-om"></i>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">KumbhSetu <span class="highlight">Nashik</span></h1>
+                    <p class="brand-tagline" data-i18n="brandSubtitle">Smart Maha Kumbh Services Portal • कुंभसेतू नाशिक</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Action Controls -->
+            <div class="header-actions">
+                <button class="action-pill-btn gps-pill-btn" id="gpsToggleBtn" onclick="requestUserLocation()" title="Use GPS Location">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <span id="gpsBtnText" data-i18n="useGpsBtn">Find Near Me</span>
+                </button>
+                
+                <button class="action-pill-btn saved-pill-btn" onclick="openSavedDrawer()" title="View Saved Services">
+                    <i class="fa-solid fa-bookmark"></i>
+                    <span class="saved-counter" id="savedCountBadge">0</span>
+                    <span class="hide-mobile" data-i18n="savedPill">Saved</span>
+                </button>
+
+                <button class="action-pill-btn qr-pill-btn" onclick="openQRModal()" title="Generate Scannable QR Code & Poster">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span data-i18n="qrBtn">Get QR Poster</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 3. ZONE NOTICE BANNER (Dynamically Updated when scanned with ?zone= or chosen) -->
+    <div id="activeZoneBanner" class="zone-banner hidden">
+        <div class="container flex-between">
+            <div class="zone-banner-content">
+                <i class="fa-solid fa-map-pin"></i>
+                <span id="zoneBannerText">Showing services for Selected Zone</span>
+            </div>
+            <button class="btn-text-sm" onclick="clearZoneFilter()" data-i18n="clearZoneBtn">View All Nashik</button>
+        </div>
+    </div>
+
+    <!-- 4. HERO SECTION -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <span class="hero-pill-badge" data-i18n="heroBadge"><i class="fa-solid fa-dharmachakra"></i> Nashik Maha Kumbh Mela 2027</span>
+                <h2 id="langHeroTitle" class="hero-title" data-i18n="heroTitle">Pilgrim Essential Services Directory</h2>
+                <p id="langHeroDesc" class="hero-desc" data-i18n="heroDesc">Scan & find verified hospitals, clean toilets, drinking water, satvik food, shelters, and police helpdesks around Ramkund, Panchavati & Tapovan.</p>
+                
+                <!-- Quick Zone Pills -->
+                <div class="zone-selector-wrapper">
+                    <span class="zone-selector-label" data-i18n="zoneSelectorLabel">Select Your Pilgrim Zone:</span>
+                    <div class="zone-chips" id="zoneChipsContainer">
+                        <button class="zone-chip active" data-zone="all" onclick="selectZone('all')"><i class="fa-solid fa-city"></i> <span data-i18n="zoneAll">All Nashik</span></button>
+                        <button class="zone-chip" data-zone="ramkund" onclick="selectZone('ramkund')"><i class="fa-solid fa-water"></i> <span data-i18n="zoneRamkund">Ramkund Ghat</span></button>
+                        <button class="zone-chip" data-zone="panchavati" onclick="selectZone('panchavati')"><i class="fa-solid fa-gopuram"></i> <span data-i18n="zonePanchavati">Panchavati</span></button>
+                        <button class="zone-chip" data-zone="tapovan" onclick="selectZone('tapovan')"><i class="fa-solid fa-campground"></i> <span data-i18n="zoneTapovan">Tapovan (Sadhu Gram)</span></button>
+                        <button class="zone-chip" data-zone="nashik_road" onclick="selectZone('nashik_road')"><i class="fa-solid fa-train"></i> <span data-i18n="zoneNashikRoad">Nashik Road Station</span></button>
+                        <button class="zone-chip" data-zone="cbs" onclick="selectZone('cbs')"><i class="fa-solid fa-bus"></i> <span data-i18n="zoneCBS">CBS Bus Stand</span></button>
+                    </div>
+                </div>
+
+                <!-- Unified Search & Filter Control Card -->
+                <div class="filter-card">
+                    <div class="search-input-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            data-i18n-ph="searchPlaceholder" 
+                            placeholder="Search hospital, food, toilet, drinking water, ATM..." 
+                            oninput="handleSearchInput()" 
+                            aria-label="Search essential services">
+                        <button id="clearSearchBtn" class="clear-search-btn hidden" onclick="clearSearch()" aria-label="Clear Search"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <div class="filter-controls-row">
+                        <!-- Search Radius Slider -->
+                        <div class="radius-control">
+                            <div class="radius-header">
+                                <label for="radiusSlider" id="langRadiusLabel" data-i18n="radiusLabel"><i class="fa-solid fa-arrows-left-right-to-line"></i> Search Radius:</label>
+                                <span id="radiusVal" class="radius-badge">10.0 KM</span>
+                            </div>
+                            <input 
+                                type="range" 
+                                id="radiusSlider" 
+                                min="0.5" 
+                                max="15.0" 
+                                step="0.5" 
+                                value="10.0" 
+                                oninput="updateRadius(this.value)" 
+                                aria-label="Adjust search radius">
+                        </div>
+
+                        <!-- Secondary Filters: Sort & Affordability -->
+                        <div class="secondary-filters">
+                            <div class="filter-select-group">
+                                <label for="sortBySelect" data-i18n="sortLabel"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort By:</label>
+                                <select id="sortBySelect" onchange="updateSort(this.value)">
+                                    <option value="distance" data-i18n="sortDistance">Nearest Distance</option>
+                                    <option value="verified" data-i18n="sortVerified">Recently Verified</option>
+                                    <option value="name" data-i18n="sortName">Name (A-Z)</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-select-group">
+                                <label for="affordabilityFilter" data-i18n="filterCostLabel"><i class="fa-solid fa-hand-holding-dollar"></i> Cost Filter:</label>
+                                <select id="affordabilityFilter" onchange="updateAffordability(this.value)">
+                                    <option value="all" data-i18n="costAll">All Types</option>
+                                    <option value="free" data-i18n="costFree">Free / Seva Only</option>
+                                    <option value="budget" data-i18n="costBudget">Budget / Affordable</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GPS Notification Bar (Shows status or fallback notice) -->
+                    <div id="locationStatusAlert" class="location-status-bar">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span id="locationStatusText" data-i18n="locDefaultNote">Calculating distances from Ramkund Ghat Center. Enable GPS for live distance.</span>
+                        <button class="btn-link-action" onclick="requestUserLocation()" data-i18n="enableGpsLink">Enable GPS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. 12 ESSENTIAL SERVICE CATEGORIES NAVIGATION -->
+    <nav class="categories-nav" aria-label="Service Categories">
+        <div class="container">
+            <div class="category-scroll-container no-scrollbar" id="categoryScroll">
+                <button class="cat-pill active" onclick="setCategory('all')" id="cat-all">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span data-i18n="catAll">All Services</span>
+                    <span class="cat-count" id="count-all">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('hospital')" id="cat-hospital">
+                    <i class="fa-solid fa-hospital"></i>
+                    <span data-i18n="catHospital">Hospitals</span>
+                    <span class="cat-count" id="count-hospital">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('ambulance')" id="cat-ambulance">
+                    <i class="fa-solid fa-truck-medical"></i>
+                    <span data-i18n="catAmbulance">Ambulance</span>
+                    <span class="cat-count" id="count-ambulance">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('stay')" id="cat-stay">
+                    <i class="fa-solid fa-bed"></i>
+                    <span data-i18n="catStay">Stay & Lodges</span>
+                    <span class="cat-count" id="count-stay">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('food')" id="cat-food">
+                    <i class="fa-solid fa-utensils"></i>
+                    <span data-i18n="catFood">Food & Mess</span>
+                    <span class="cat-count" id="count-food">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('atm')" id="cat-atm">
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                    <span data-i18n="catAtm">ATMs & Banks</span>
+                    <span class="cat-count" id="count-atm">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('police')" id="cat-police">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span data-i18n="catPolice">Police & Help</span>
+                    <span class="cat-count" id="count-police">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('toilet')" id="cat-toilet">
+                    <i class="fa-solid fa-restroom"></i>
+                    <span data-i18n="catToilet">Public Toilets</span>
+                    <span class="cat-count" id="count-toilet">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('water')" id="cat-water">
+                    <i class="fa-solid fa-bottle-water"></i>
+                    <span data-i18n="catWater">Drinking Water</span>
+                    <span class="cat-count" id="count-water">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('parking')" id="cat-parking">
+                    <i class="fa-solid fa-square-parking"></i>
+                    <span data-i18n="catParking">Parking Areas</span>
+                    <span class="cat-count" id="count-parking">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('transport')" id="cat-transport">
+                    <i class="fa-solid fa-bus-simple"></i>
+                    <span data-i18n="catTransport">Bus & Railway</span>
+                    <span class="cat-count" id="count-transport">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('lostfound')" id="cat-lostfound">
+                    <i class="fa-solid fa-person-circle-question"></i>
+                    <span data-i18n="catLostFound">Lost & Found</span>
+                    <span class="cat-count" id="count-lostfound">0</span>
+                </button>
+                <button class="cat-pill" onclick="setCategory('tourist')" id="cat-tourist">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span data-i18n="catTourist">Information Centers</span>
+                    <span class="cat-count" id="count-tourist">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 6. MAIN DIRECTORY LISTINGS SECTION -->
+    <main class="container main-content" id="mainDirectory">
+        <div class="results-header flex-between">
+            <div class="results-meta">
+                <span id="resultCount" class="results-number">0</span>
+                <span id="langResultsText" class="results-label" data-i18n="resultsFound">Verified pilgrim services found near you</span>
+            </div>
+            <div class="view-toggle hide-mobile">
+                <span class="sample-data-badge" title="Labeled demonstration data ready for official Nashik data replacement"><i class="fa-solid fa-database"></i> <span data-i18n="sampleDataTag">Demo Dataset (Verified Schema)</span></span>
+            </div>
+        </div>
+
+        <!-- Places Grid (Populated dynamically via script.js) -->
+        <div id="placesGrid" class="places-grid" role="region" aria-live="polite">
+            <!-- Dynamic Cards Injected Here -->
+        </div>
+
+        <!-- No Results / Empty State Feedback -->
+        <div id="noResults" class="empty-state hidden">
+            <div class="empty-state-icon">
+                <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+            <h3 data-i18n="noResultsTitle">No Services Found In This Range</h3>
+            <p data-i18n="noResultsDesc">Try expanding your search radius slider, clearing keyword filters, or changing your current zone.</p>
+            <div class="empty-state-actions">
+                <button class="btn-primary" onclick="resetAllFilters()" data-i18n="resetFiltersBtn"><i class="fa-solid fa-rotate-left"></i> Reset All Filters</button>
+                <button class="btn-secondary" onclick="expandRadiusToMax()" data-i18n="maxRadiusBtn"><i class="fa-solid fa-arrows-maximize"></i> Expand Radius to 15 KM</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. EMERGENCY ASSISTANCE DEDICATED SECTION -->
+    <section class="emergency-section" id="emergencySection">
+        <div class="container">
+            <div class="section-title-wrap">
+                <span class="section-sub"><i class="fa-solid fa-life-ring"></i> 24/7 Immediate Help</span>
+                <h2 data-i18n="emergencySecTitle">Official Nashik Emergency Assistance</h2>
+                <p data-i18n="emergencySecDesc">Toll-free emergency numbers and first-aid response units authorized for Nashik Maha Kumbh Mela.</p>
+            </div>
+
+            <div class="emergency-grid">
+                <!-- Card 1: Ambulance -->
+                <div class="emergency-card em-card-red">
+                    <div class="em-card-icon"><i class="fa-solid fa-truck-medical"></i></div>
+                    <div class="em-card-body">
+                        <h3>Ambulance & Medical Emergency</h3>
+                        <p>Immediate ICU & Trauma response on all ghats</p>
+                        <div class="em-phone-big">108</div>
+                        <a href="tel:108" class="btn-em-call"><i class="fa-solid fa-phone"></i> Call 108 Now</a>
+                    </div>
+                </div>
+
+                <!-- Card 2: Police -->
+                <div class="emergency-card em-card-blue">
+                    <div class="em-card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="em-card-body">
+                        <h3>Police & Safety Control Room</h3>
+                        <p>Central security, pilgrim crowd management</p>
+                        <div class="em-phone-big">112</div>
+                        <a href="tel:112" class="btn-em-call"><i class="fa-solid fa-phone"></i> Call 112 Now</a>
+                    </div>
+                </div>
+
+                <!-- Card 3: Kumbh Central Helpline -->
+                <div class="emergency-card em-card-orange">
+                    <div class="em-card-icon"><i class="fa-solid fa-headset"></i></div>
+                    <div class="em-card-body">
+                        <h3>Nashik Kumbh Mela Helpline</h3>
+                        <p>24x7 Multi-lingual pilgrim grievance & lost persons</p>
+                        <div class="em-phone-big">1800-233-0011</div>
+                        <a href="tel:18002330011" class="btn-em-call"><i class="fa-solid fa-phone"></i> Call Toll-Free</a>
+                    </div>
+                </div>
+
+                <!-- Card 4: Disaster Response -->
+                <div class="emergency-card em-card-maroon">
+                    <div class="em-card-icon"><i class="fa-solid fa-person-shelter"></i></div>
+                    <div class="em-card-body">
+                        <h3>District Disaster Cell Nashik</h3>
+                        <p>River rescue, ghat flood alerts, major incidents</p>
+                        <div class="em-phone-big">0253-2317151</div>
+                        <a href="tel:02532317151" class="btn-em-call"><i class="fa-solid fa-phone"></i> Call Disaster Cell</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Disclaimer Notice -->
+            <div class="emergency-disclaimer">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span data-i18n="emergencyDisclaimer">Important Notice: KumbhSetu is an informational public-service directory and does not directly dispatch emergency responders. In case of critical emergency, dial 108 or 112 immediately. Information displayed is prepared for pilgrim assistance and subject to District Administration confirmation.</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. QR CODE MODAL & PRINTABLE POSTER DIALOG -->
+    <div id="qrModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+        <div class="modal-backdrop" onclick="closeQRModal()"></div>
+        <div class="modal-dialog qr-modal-dialog">
+            <button class="modal-close-btn" onclick="closeQRModal()" aria-label="Close Modal">&times;</button>
+            
+            <div class="qr-modal-header">
+                <h3 id="qrModalTitle" data-i18n="qrModalTitle">Pilgrim QR Poster Generator</h3>
+                <p data-i18n="qrModalDesc">Generate instant scannable QR codes for your physical information stalls, ghats, or camps.</p>
+            </div>
+
+            <!-- Zone Selector for QR Code -->
+            <div class="qr-zone-selector">
+                <label for="qrZoneSelect" data-i18n="qrTargetLabel">Target Zone for this QR Code:</label>
+                <select id="qrZoneSelect" class="qr-select" onchange="generateDynamicQR()">
+                    <option value="all">Entire KumbhSetu Portal (All Nashik)</option>
+                    <option value="ramkund">Ramkund Ghat Direct Portal</option>
+                    <option value="panchavati">Panchavati & Kalaram Direct Portal</option>
+                    <option value="tapovan">Tapovan Sadhu Gram Direct Portal</option>
+                    <option value="nashik_road">Nashik Road Railway Station Direct</option>
+                    <option value="cbs">Central Bus Stand (CBS) Direct</option>
+                </select>
+            </div>
+
+            <!-- Local file protocol alert -->
+            <div id="qrLocalFileAlert" class="qr-local-notice hidden">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                    <strong>Local File URL Notice:</strong>
+                    <p>You are viewing this site locally (<code id="localUrlDisplay">file://</code>). Smart phone cameras cannot access local computer files over the internet. When hosted on GitHub Pages or Vercel, this QR will open the public website directly.</p>
+                    <p class="sim-url-tag">Simulating Live Public URL: <span id="simulatedPublicUrl">https://kumbhsetu-nashik.gov.in</span></p>
+                </div>
+            </div>
+
+            <!-- Printable QR Poster Template (Printed cleanly with window.print() via @media print) -->
+            <div id="printableQRPoster" class="printable-poster">
+                <div class="poster-decor-border">
+                    <div class="poster-header">
+                        <div class="poster-om-icon"><i class="fa-solid fa-om"></i></div>
+                        <div class="poster-titles">
+                            <h2>KumbhSetu Nashik</h2>
+                            <p class="poster-sub-lang">स्मार्ट महाकुंभ सेवा पोर्टल • Maha Kumbh 2027</p>
+                        </div>
+                    </div>
+
+                    <div class="poster-zone-tag" id="posterZoneTag">
+                        <i class="fa-solid fa-location-dot"></i> <span id="posterZoneName">All Nashik Pilgrim Portal</span>
+                    </div>
+
+                    <div class="poster-qr-wrapper">
+                        <div id="qrcode" class="qr-container"></div>
+                        <p class="poster-scan-prompt"><i class="fa-solid fa-camera"></i> Scan with any Mobile Camera to Open</p>
+                    </div>
+
+                    <div class="poster-instructions">
+                        <div class="inst-item">
+                            <i class="fa-solid fa-ban"></i>
+                            <span>No App Install Required</span>
+                        </div>
+                        <div class="inst-item">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>Instant 1-Click Navigation</span>
+                        </div>
+                        <div class="inst-item">
+                            <i class="fa-solid fa-language"></i>
+                            <span>मराठी • हिन्दी • English</span>
+                        </div>
+                    </div>
+
+                    <div class="poster-emergency-box">
+                        <strong>24x7 Emergency Hotlines:</strong>
+                        <div class="poster-hotlines">
+                            <span>Ambulance: <b>108</b></span>
+                            <span>Police: <b>112</b></span>
+                            <span>Helpline: <b>1800-233-0011</b></span>
+                        </div>
+                    </div>
+
+                    <div class="poster-footer">
+                        <p>Nashik Municipal Corporation & Kumbh Administration Information Cell</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="qr-modal-actions">
+                <button class="btn-primary btn-print" onclick="printPoster()"><i class="fa-solid fa-print"></i> <span data-i18n="printPosterBtn">Print Physical Poster</span></button>
+                <button class="btn-secondary" onclick="copyCurrentPortalUrl()"><i class="fa-solid fa-copy"></i> <span data-i18n="copyLinkBtn">Copy Portal Link</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. REPORT INCORRECT INFORMATION MODAL -->
+    <div id="reportModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+        <div class="modal-backdrop" onclick="closeReportModal()"></div>
+        <div class="modal-dialog">
+            <button class="modal-close-btn" onclick="closeReportModal()" aria-label="Close Modal">&times;</button>
+            
+            <div class="modal-header">
+                <h3 id="reportModalTitle"><i class="fa-solid fa-flag"></i> Report Incorrect Information</h3>
+                <p>Help us keep KumbhSetu accurate for millions of pilgrims visiting Nashik.</p>
+            </div>
+
+            <form id="reportForm" onsubmit="submitReport(event)">
+                <input type="hidden" id="reportPlaceId" value="">
+                
+                <div class="form-group">
+                    <label>Selected Service:</label>
+                    <input type="text" id="reportPlaceName" readonly class="form-control bg-light">
+                </div>
+
+                <div class="form-group">
+                    <label for="reportReason">Issue Type: *</label>
+                    <select id="reportReason" class="form-control" required>
+                        <option value="">Select the issue...</option>
+                        <option value="phone">Wrong / Inactive Phone Number</option>
+                        <option value="location">Wrong Location / Pin on Map</option>
+                        <option value="closed">Facility Closed / Temporarily Unavailable</option>
+                        <option value="timing">Incorrect Timings</option>
+                        <option value="pricing">Incorrect Price / Overcharging</option>
+                        <option value="other">Other Correction</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="reportDetails">Details / Correct Information:</label>
+                    <textarea id="reportDetails" rows="3" class="form-control" placeholder="Please provide verified details or correct contact..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="reporterContact">Your Contact / Name (Optional for verification):</label>
+                    <input type="text" id="reporterContact" class="form-control" placeholder="Name or Mobile Number">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeReportModal()">Cancel</button>
+                    <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 10. SAVED PLACES DRAWER / MODAL -->
+    <div id="savedDrawer" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="savedDrawerTitle">
+        <div class="modal-backdrop" onclick="closeSavedDrawer()"></div>
+        <div class="modal-dialog saved-drawer-dialog">
+            <button class="modal-close-btn" onclick="closeSavedDrawer()" aria-label="Close Modal">&times;</button>
+            
+            <div class="modal-header">
+                <h3 id="savedDrawerTitle"><i class="fa-solid fa-bookmark"></i> Bookmarked Services</h3>
+                <p>Services you saved for quick offline reference during your Nashik visit.</p>
+            </div>
+
+            <div id="savedPlacesList" class="saved-places-list">
+                <!-- Dynamically populated -->
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeSavedDrawer()">Close</button>
+                <button type="button" class="btn-danger-outline" onclick="clearAllSaved()"><i class="fa-solid fa-trash-can"></i> Clear All Saved</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 11. ADMIN DASHBOARD & CMS MODAL (Future-Ready for Firebase/Supabase) -->
+    <div id="adminModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+        <div class="modal-backdrop" onclick="closeAdminModal()"></div>
+        <div class="modal-dialog admin-modal-dialog">
+            <button class="modal-close-btn" onclick="closeAdminModal()" aria-label="Close Modal">&times;</button>
+            
+            <div class="modal-header">
+                <h3 id="adminModalTitle"><i class="fa-solid fa-lock"></i> KumbhSetu Portal Administration</h3>
+                <p>Manage service listings, review pilgrim error reports, and export database schema.</p>
+            </div>
+
+            <!-- Admin Authentication Screen -->
+            <div id="adminAuthScreen" class="admin-auth-screen">
+                <div class="auth-box">
+                    <i class="fa-solid fa-shield-halved auth-icon"></i>
+                    <h4>Administrator Access</h4>
+                    <p>Enter administrative passcode to manage portal data.</p>
+                    <div class="form-group">
+                        <input type="password" id="adminPasscode" class="form-control" placeholder="Enter passcode (Demo: kumbh2027)">
+                    </div>
+                    <button class="btn-primary w-100" onclick="verifyAdminPasscode()"><i class="fa-solid fa-key"></i> Unlock Dashboard</button>
+                    <p class="admin-hint">Tip: For demo evaluation, use passcode <code>kumbh2027</code></p>
+                </div>
+            </div>
+
+            <!-- Admin Content (Visible after login) -->
+            <div id="adminPanelContent" class="admin-panel-content hidden">
+                <div class="admin-tabs">
+                    <button class="admin-tab-btn active" data-tab="listings" onclick="switchAdminTab('listings')"><i class="fa-solid fa-list-check"></i> Service Listings (<span id="adminListCount">0</span>)</button>
+                    <button class="admin-tab-btn" data-tab="add" onclick="switchAdminTab('add')"><i class="fa-solid fa-circle-plus"></i> Add New Service</button>
+                    <button class="admin-tab-btn" data-tab="reports" onclick="switchAdminTab('reports')"><i class="fa-solid fa-flag"></i> Reported Issues (<span id="adminReportCount">0</span>)</button>
+                    <button class="admin-tab-btn" data-tab="database" onclick="switchAdminTab('database')"><i class="fa-solid fa-database"></i> Database / Export</button>
+                </div>
+
+                <!-- Tab 1: Listings Table -->
+                <div id="adminTabListings" class="admin-tab-pane active">
+                    <div class="admin-pane-header">
+                        <h4>Active Essential Services</h4>
+                        <button class="btn-secondary-sm" onclick="resetDatabaseToDefault()"><i class="fa-solid fa-rotate-left"></i> Reset to Sample Data</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Zone</th>
+                                    <th>Contact</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Add New Service Listing -->
+                <div id="adminTabAdd" class="admin-tab-pane">
+                    <h4>Add New Service Listing</h4>
+                    <form id="addServiceForm" onsubmit="handleAdminAddService(event)">
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label>Service Name (English): *</label>
+                                <input type="text" id="newPlaceName" class="form-control" required placeholder="e.g. Anand Ashram Dharmashala">
+                            </div>
+                            <div class="form-group col-6">
+                                <label>Service Name (मराठी):</label>
+                                <input type="text" id="newPlaceNameMr" class="form-control" placeholder="उदा. आनंद आश्रम धर्मशाळा">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-4">
+                                <label>Category: *</label>
+                                <select id="newPlaceCategory" class="form-control" required>
+                                    <option value="hospital">Hospital / Health Center</option>
+                                    <option value="ambulance">Ambulance & Emergency</option>
+                                    <option value="stay">Hotels / Lodges / Dharmashala</option>
+                                    <option value="food">Mess / Free Food / Bhojanalaya</option>
+                                    <option value="atm">ATM & Banking</option>
+                                    <option value="police">Police Station / Chowki</option>
+                                    <option value="toilet">Public Toilet Block</option>
+                                    <option value="water">Drinking Water Facility</option>
+                                    <option value="parking">Parking & Holding Area</option>
+                                    <option value="transport">Bus / Railway Station</option>
+                                    <option value="lostfound">Lost and Found Desk</option>
+                                    <option value="tourist">Tourist / Pilgrim Info Kiosk</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-4">
+                                <label>Zone: *</label>
+                                <select id="newPlaceZone" class="form-control" required>
+                                    <option value="ramkund">Ramkund Ghat</option>
+                                    <option value="panchavati">Panchavati</option>
+                                    <option value="tapovan">Tapovan (Sadhu Gram)</option>
+                                    <option value="nashik_road">Nashik Road Station</option>
+                                    <option value="cbs">Central Bus Stand (CBS)</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-4">
+                                <label>Price / Affordability:</label>
+                                <select id="newPlacePrice" class="form-control">
+                                    <option value="Free / Seva">Free / Seva (निःशुल्क)</option>
+                                    <option value="Affordable (₹)">Affordable / Budget (₹)</option>
+                                    <option value="Standard (₹₹)">Standard (₹₹)</option>
+                                    <option value="Commercial">Commercial Rates</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label>Verified Contact Phone:</label>
+                                <input type="tel" id="newPlacePhone" class="form-control" placeholder="0253... or 9822...">
+                            </div>
+                            <div class="form-group col-6">
+                                <label>Operating Hours:</label>
+                                <input type="text" id="newPlaceTiming" class="form-control" placeholder="e.g. 24/7 or 06:00 AM - 10:00 PM">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label>Latitude: *</label>
+                                <input type="number" step="0.000001" id="newPlaceLat" class="form-control" required placeholder="e.g. 19.997500">
+                            </div>
+                            <div class="form-group col-6">
+                                <label>Longitude: *</label>
+                                <input type="number" step="0.000001" id="newPlaceLng" class="form-control" required placeholder="e.g. 73.791500">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Complete Street Address & Landmark: *</label>
+                            <input type="text" id="newPlaceAddress" class="form-control" required placeholder="Near Kalaram Temple East Gate, Panchavati, Nashik">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Available Facilities (comma separated):</label>
+                            <input type="text" id="newPlaceFacilities" class="form-control" placeholder="Wheelchair, RO Water, 24/7 Power, Free Prasadam">
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="submit" class="btn-primary"><i class="fa-solid fa-plus"></i> Save New Listing</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab 3: Reported Issues -->
+                <div id="adminTabReports" class="admin-tab-pane">
+                    <div class="admin-pane-header">
+                        <h4>Pilgrim Feedback & Correction Reports</h4>
+                        <button class="btn-danger-outline-sm" onclick="clearAllReports()"><i class="fa-solid fa-trash"></i> Clear Reports</button>
+                    </div>
+                    <div id="adminReportsContainer">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Tab 4: Database / Cloud Integration -->
+                <div id="adminTabDatabase" class="admin-tab-pane">
+                    <h4>Cloud Database Sync (Firebase & Supabase Ready)</h4>
+                    <p>Current directory is stored locally in client-side persistent storage. For live deployment across multi-admin teams, sync to Firebase Firestore or Supabase using the pre-configured connector schema.</p>
+                    <div class="db-actions">
+                        <button class="btn-secondary" onclick="exportDataAsJSON()"><i class="fa-solid fa-file-arrow-down"></i> Export Full JSON Database</button>
+                        <button class="btn-secondary" onclick="printSchemaInfo()"><i class="fa-solid fa-code"></i> View Cloud Security Rules</button>
+                    </div>
+                    <div class="code-box">
+                        <pre><code>// KumbhSetu Firebase Firestore Data Collection Schema:
+Collection: "kumbh_services"
+Document: {
+  id: string,
+  name: string,
+  nameMr: string,
+  category: "hospital" | "food" | "stay" | "toilet" | ... ,
+  zone: "ramkund" | "panchavati" | "tapovan" | "nashik_road" | "cbs",
+  lat: number,
+  lng: number,
+  address: string,
+  phone: string,
+  timings: string,
+  priceTier: string,
+  facilities: string[],
+  lastVerified: timestamp,
+  verifiedBy: "District Disaster Cell Nashik"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 12. MOBILE-FRIENDLY BOTTOM NAVIGATION BAR -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <button class="bnav-btn active" onclick="scrollToTop()">
+            <i class="fa-solid fa-house"></i>
+            <span data-i18n="bnavHome">Home</span>
+        </button>
+        <button class="bnav-btn" onclick="scrollToCategories()">
+            <i class="fa-solid fa-compass"></i>
+            <span data-i18n="bnavCategories">Services</span>
+        </button>
+        <button class="bnav-btn bnav-em-btn" onclick="scrollToEmergency()">
+            <i class="fa-solid fa-truck-medical"></i>
+            <span data-i18n="bnavEmergency">Emergency</span>
+        </button>
+        <button class="bnav-btn" onclick="openSavedDrawer()">
+            <i class="fa-solid fa-bookmark"></i>
+            <span data-i18n="bnavSaved">Saved</span>
+        </button>
+        <button class="bnav-btn" onclick="openQRModal()">
+            <i class="fa-solid fa-qrcode"></i>
+            <span data-i18n="bnavQr">QR Poster</span>
+        </button>
+    </nav>
+
+    <!-- 13. FOOTER -->
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <div class="footer-top flex-between">
+                <div class="footer-brand">
+                    <div class="brand-emblem small"><i class="fa-solid fa-om"></i></div>
+                    <div>
+                        <h3>KumbhSetu Nashik</h3>
+                        <p data-i18n="footerTagline">Smart Maha Kumbh Services & Pilgrim Navigation Portal</p>
+                    </div>
+                </div>
+                <div class="footer-admin-link">
+                    <button class="btn-text-muted" onclick="openAdminModal()"><i class="fa-solid fa-lock"></i> <span data-i18n="adminLink">Admin Portal</span></button>
+                </div>
+            </div>
+
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4 data-i18n="footerZonesTitle">Key Pilgrim Zones</h4>
+                    <ul>
+                        <li><a href="javascript:void(0)" onclick="selectZone('ramkund')">Ramkund Holy Bathing Ghats</a></li>
+                        <li><a href="javascript:void(0)" onclick="selectZone('panchavati')">Panchavati & Shri Kalaram Mandir</a></li>
+                        <li><a href="javascript:void(0)" onclick="selectZone('tapovan')">Tapovan Sadhu Gram & Akhadas</a></li>
+                        <li><a href="javascript:void(0)" onclick="selectZone('nashik_road')">Nashik Road Central Railway Station</a></li>
+                        <li><a href="javascript:void(0)" onclick="selectZone('cbs')">CBS (Central Bus Station) Terminal</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4 data-i18n="footerHelpTitle">Emergency Hotlines</h4>
+                    <ul>
+                        <li><a href="tel:108">Medical / Ambulance: 108</a></li>
+                        <li><a href="tel:112">Police Emergency: 112</a></li>
+                        <li><a href="tel:18002330011">Kumbh Mela Helpdesk: 1800-233-0011</a></li>
+                        <li><a href="tel:101">Fire Control: 101</a></li>
+                        <li><a href="tel:02532317151">Disaster Cell: 0253-2317151</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4 data-i18n="footerProjectTitle">Community Engagement Project</h4>
+                    <p class="project-info">Developed as a Computer Engineering Community Engagement Project to assist pilgrims, senior citizens, and tourists during the holy Nashik Trimbakeshwar Simhastha Maha Kumbh Mela.</p>
+                    <p class="open-source-note"><i class="fa-brands fa-creative-commons"></i> Non-commercial public service initiative.</p>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2027 KumbhSetu Nashik. Designed for Pilgrims & Devotees. All sample entries verified for standard schema demonstration.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Element -->
+    <div id="toastNotification" class="toast-notification hidden" role="alert" aria-live="assertive"></div>
+
+    <!-- Application Script -->
+    <script src="script.js"></script>
+</body>
+</html>
